@@ -32,20 +32,17 @@ async function getData(token, dataQuery) {
     let options = createGetOptions(token, url);
     let data = await makeGetRequest(options);
     let response = data.data;
-    // if (response.next) {
-    //     while (response.next) {
-    //         console.log('there are still more items to retrieve')
-    //         url = response.next;
-    //         options = createGetOptions(token, url);
-    //         let newRequest = await makeGetRequest(options);
-    //         response.items = response.items.concat(newRequest.data.items);
-    //         response.next = newRequest.data.next;
-    //     };
-    // }
+    if (response.next) {
+        while (response.next) {
+            console.log('there are still more items to retrieve')
+            url = response.next;
+            options = createGetOptions(token, url);
+            let newRequest = await makeGetRequest(options);
+            response.items = response.items.concat(newRequest.data.items);
+            response.next = newRequest.data.next;
+        };
+    }
     return response;
-    trackList.forEach(track => {
-        url += track.toString();
-    })
 }
 
 //gets data from multiple spotify api endpoints
@@ -84,7 +81,7 @@ function createGetOptions(token, url) {
 function makeGetRequest(options) {
     var request = axios(options).catch(error => {
         if (error) {
-            console.log('there was an error in makeGetRequest: ', error);
+            console.log('there was an error in makeGetRequest: ', error.response);
         }
     })
     return request;
@@ -122,7 +119,6 @@ async function addToPlaylist(token, playlistId, trackList) {
             console.log('there was an error in addToPlaylist: ', error.response)
         }
     });
-    console.log('updated: ', updatedPlaylist)
     return updatedPlaylist;
 }
 
