@@ -32,16 +32,16 @@ async function getData(token, dataQuery) {
     let options = createGetOptions(token, url);
     let data = await makeGetRequest(options);
     let response = data.data;
-    if (response.next) {
-        while (response.next) {
-            console.log('there are still more items to retrieve')
-            url = response.next;
-            options = createGetOptions(token, url);
-            let newRequest = await makeGetRequest(options);
-            response.items = response.items.concat(newRequest.data.items);
-            response.next = newRequest.data.next;
-        };
-    }
+    // if (response.next) {
+    //     while (response.next) {
+    //         console.log('there are still more items to retrieve')
+    //         url = response.next;
+    //         options = createGetOptions(token, url);
+    //         let newRequest = await makeGetRequest(options);
+    //         response.items = response.items.concat(newRequest.data.items);
+    //         response.next = newRequest.data.next;
+    //     };
+    // }
     return response;
 }
 
@@ -101,25 +101,35 @@ async function createPlaylist(token, playlistName, userInfo) {
     };
     let url = 'https://api.spotify.com/v1/users/' + userInfo.toString() + '/playlists';
     let options = createPostOptions(token, url, name)
-    let playlist = await axios(options).catch(error => {
-        if (error) {
-            console.log('there was an error in createPlaylist: ', error.response.data);
-        }
-    });
+    let playlist = await makePostRequest(options);
     return playlist.data;
 }
 
-//adds songs to previously created playlist
+//adds songs to previously created playlist in chunks of 100 or less
 async function addToPlaylist(token, playlistId, trackList) {
-    let listObj = {uris: trackList};
-    let url = 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks';
-    let options = createPostOptions(token, url, listObj);
-    let updatedPlaylist = await axios(options).catch(error => {
-        if (error) {
-            console.log('there was an error in addToPlaylist: ', error.response)
+    let newTrackList = trackList;
+    let updatedPlaylist;
+
+
+    while (newTrackList.length > 0) {
+        console.log('newTrackList.length: ', newTrackList.length);
+
+        let url = 'https://api.spotify.com/v1/playlists/' + playlistId + '/tracks';
+        let tempTrackList;
+        let listObj = {uris: []};
+
+        if (newTrackList.length > 100) {
+            tempTrackList = newTrackList.splice(0, 100);
+        } else {
+            tempTrackList = newTrackList.splice(0, newTrackList.length);
         }
-    });
-    return updatedPlaylist;
+
+        listObj.uris = tempTrackList;
+        let options = createPostOptions(token, url, listObj);
+        updatedPlaylist = await makePostRequest(options);
+    }
+
+    return updatedPlaylist.data;
 }
 
 //creates an options object for post requests
@@ -132,21 +142,17 @@ function createPostOptions(token, url, postData) {
             'Authorization': 'Bearer ' + token,
         },
     };
-    console.log('options: ', options)
     return options;
 }
 
-// function makePostRequest(options) {
-//     let data = {};
-//     return rp(options)
-//         .then(function (resolve, reject) {
-//             data = resolve;
-//             return data;
-//         })
-//         .catch(function (err) {
-//             console.log('there was an error: ', err);
-//         })
-// }
+async function makePostRequest(options) {
+    let data = axios(options).catch(error => {
+        if (error) {
+            console.log('there was an error in makePostRequest: ', error.response);
+        }
+    })
+    return data;
+}
 
 
 
@@ -159,6 +165,4 @@ module.exports = {
     getMultiple: getMultiple,
     createPlaylist: createPlaylist,
     addToPlaylist: addToPlaylist,
-    // createGetOptions: createGetOptions,
-    // createPostOptions: createPostOptions,
 };

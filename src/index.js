@@ -85,6 +85,7 @@ app.post('/newplaylist', async function(req, res) {
   let userId = req.body.user;
   let answer = await apiRequests.createPlaylist(apiAuth.showToken(), playlistName, userId);
   let newPlaylist = await apiRequests.addToPlaylist(apiAuth.showToken(), answer.id, trackList);
+  console.log('newPlaylist: ', newPlaylist)
 });
 
 
