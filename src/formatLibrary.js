@@ -156,6 +156,7 @@ function createArtistObject (artist) {
         name: artist.name,
         popularity: artist.popularity,
         uri: artist.uri,
+        images: artist.images,
     }
 
     return formattedArtist;
