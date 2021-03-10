@@ -171,6 +171,7 @@ function createTrackObject (track) {
     })
 
     let newTrack = {
+        albumName: track.album.name,
         artists: artists,
         href: track.href,
         id: track.id,
